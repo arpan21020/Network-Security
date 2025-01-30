@@ -1,5 +1,5 @@
 
-KEY="fuck"
+KEY="akpt"
 
 import random
 import string
@@ -45,21 +45,28 @@ class PolyAlphabeticCipher:
         3. Takes modulo 100 to keep it two digits
         """
         # Convert text to uppercase and filter only letters
-        text = ''.join(c for c in text.upper() if c in string.ascii_uppercase)
+        text = ''.join(c for c in text if c in string.ascii_lowercase)
         
         # Get sum of ASCII values
-        ascii_sum = sum(ord(c) % 65 for c in text)
+        ascii_sum = sum(ord(c) % 97 for c in text)
         
         # Generate a 4-letter hash based on the sum
         hash_letters = []
         for i in range(4):
             # Use different aspects of the ascii_sum to generate each letter
             val = (ascii_sum + i * len(text)) % 26
-            hash_letters.append(chr(val + 65))
+            hash_letters.append(chr(val + 97))
             
         return ''.join(hash_letters)
-    
-    def brute_force(self,ciphertext,key):
+    def verify(self,plaintext):
+        PLAINTEXT_LENGTH = len(plaintext)
+        s = plaintext[:PLAINTEXT_LENGTH-4]
+        hash_s = plaintext[PLAINTEXT_LENGTH-4:]
+        # print("s:",s," hash_s:",hash_s)
+        if self.hash_fn(s) == hash_s:
+            return True
+        return False
+    def brute_force(self,ciphertext):
         key_list=['a','a','a','a']
         for i in range(26):
             key_list[0]=chr(ord('a')+i)
@@ -70,17 +77,15 @@ class PolyAlphabeticCipher:
                     for l in range(26):
                         key_list[3]=chr(ord('a')+l)
                         key=''.join(key_list)
-                        print(key)
-                        print(self.decrypt(ciphertext,key))
-                        print('------------------')
+                        # print(key)
+                        decryptedtext=self.decrypt(ciphertext,key)
+                        # print('------------------')
+                        
+                        if(self.verify(decryptedtext)):
+                            return key
+        return "none"
 
-    def verify(self,plaintext):
-        PLAINTEXT_LENGTH = len(plaintext)
-        s = plaintext[:PLAINTEXT_LENGTH]
-        hash_s = plaintext[PLAINTEXT_LENGTH:]
-        if self.hash_fn(s) == hash_s:
-            return True
-        return False
+    
     
 def generate_random_strings(num_strings=5, string_length=10):
     random_strings = []
@@ -101,7 +106,11 @@ if __name__=="__main__":
         encrypted.append(temp)
     
     for index, random_string in enumerate(random_strings):
-        temp=obj.encrypt(random_string[:10],KEY)
-        print(f"Random String {index + 1}: {random_string[:10]} Encrypted: {temp}  Decrypted: {obj.decrypt(temp,KEY)}")
+        temp=obj.encrypt(random_string,KEY)
+        print(f"Random String {index + 1}: {random_string} Encrypted: {temp} Decrypted: {obj.decrypt(temp,KEY)}")
+    
+        print("Attacking :"+obj.brute_force(temp))
+        
+    
         
     
