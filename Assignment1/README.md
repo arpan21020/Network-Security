@@ -3,7 +3,6 @@
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
-- [Installation](#installation)
 - [Usage](#usage)
 - [Classes and Functions](#classes-and-functions)
 - [Example](#example)
@@ -73,6 +72,8 @@ This project provides a Python implementation of the **Vigenère Cipher**, a cla
 - `hash_fn(text: str) -> str`
   
   Generates a simple 4-letter hash for the given text.
+  1. Sums the position values of each character in the alphabet (a=0, b=1, etc.)
+  2. Multiplies by the length of the text
   
   **Parameters**:
   - `text`: The text to hash.
@@ -116,9 +117,7 @@ This project provides a Python implementation of the **Vigenère Cipher**, a cla
 Running the script will produce output similar to the following:
 
 ```
-Random String 1: xkzpmqwhtjabcd Encrypted: eqdvqjczwnmxef Decrypted: xkzpmqwhtjabcd
-Attacking : akpt
-Random String 2: lmnopqrstuijkl Decrypted: lmnopqrstuijkl
+Random String 1: hournhddfyjtdn Encrypted: hyjknrswfiymdx Decrypted: hournhddfyjtdn
 Attacking : akpt
 ...
 ```

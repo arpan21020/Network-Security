@@ -1,13 +1,13 @@
 
-KEY="akpt"
 
 import random
 import string
 
 
+KEY="akpt"
 
 class PolyAlphabeticCipher:
-    """Program to implement a vigenere cipher
+    """Program to implement a vigenere cipher which is also known as poly 
     Vigenere cipher is a polyalphabetic cipher for which the plaintext is made up of letters of the English alphabet,
     and the key is a word. The letters are encoded in such a way that they are assigned a value from 0 to 25, and the 
     ciphertext is computed by adding the values of the plaintext and the key, and taking a modulus with 26.
@@ -42,10 +42,7 @@ class PolyAlphabeticCipher:
         Simple hash function that:
         1. Sums the position values of each character in the alphabet (a=0, b=1, etc.)
         2. Multiplies by the length of the text
-        3. Takes modulo 100 to keep it two digits
         """
-        # Convert text to uppercase and filter only letters
-        text = ''.join(c for c in text if c in string.ascii_lowercase)
         
         # Get sum of ASCII values
         ascii_sum = sum(ord(c) % 97 for c in text)
