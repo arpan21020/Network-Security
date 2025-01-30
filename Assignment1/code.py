@@ -16,60 +16,27 @@ class PolyAlphabeticCipher:
         pass
     
     def encrypt(self,plaintext,key):
-        index1=0                  #pointer iterating over the plaintext letters
-        index2=0                  #pointer iterating over the key letters 
-        ciphertext=""             #ciphertext string which is returned at the end
-        
-        #iterating over the plaintext
-        while index1<len(plaintext):
-
-            #assigning every letter a code by using their ASCII values
-            letter=ord(plaintext[index1])%65       
-            key_letter=ord(key[index2])%65     
-
-            #shifting every letter in the plaintext by the value of the corresponding value of the key,
-            #taking a modulo with 26, and converting it back into letter by generating ASCII value
-            cipher_letter=chr(((letter+key_letter)%26)+65)   
-
-            #appending every letter to the ciphertext
-            ciphertext+=cipher_letter
-
-            #increasing both pointers by 1
-            index1+=1
-            index2+=1
-
-            #resetting the index of the key until the plaintext pointer reaches the end
-            if index2==len(key):
-                index2=0
+        ciphertext=""
+        minus=ord('a')
+        for i in range (0,len(plaintext)):
+            val1=ord(plaintext[i])-minus
+            val2=ord(key[i%4])-minus
+            val3=(val1+val2)%26
+            ciphertext+=chr(val3+minus)
         return ciphertext
+            
+            
 
-    def decrypt(self,plaintext,key):
-        index1=0                  #pointer iterating over the plaintext letters
-        index2=0                  #pointer iterating over the key letters 
-        ciphertext=""             #ciphertext string which is returned at the end
+    def decrypt(self,ciphertext,key):
+        plaintext=""
+        minus=ord('a')
+        for i in range(0, len(ciphertext)):
+            val1=ord(ciphertext[i])-minus
+            val2=ord(key[i%4])-minus
+            val3=(val1-val2)%26
+            plaintext+=chr(val3+minus)
+        return plaintext
         
-        #iterating over the plaintext
-        while index1<len(plaintext):
-
-            #assigning every letter a code by using their ASCII values
-            letter=ord(plaintext[index1])%65       
-            key_letter=ord(key[index2])%65     
-
-            #shifting every letter in the plaintext by the value of the corresponding value of the key,
-            #taking a modulo with 26, and converting it back into letter by generating ASCII value
-            cipher_letter=chr(((letter-key_letter)%26)+65)   
-
-            #appending every letter to the ciphertext
-            ciphertext+=cipher_letter
-
-            #increasing both pointers by 1
-            index1+=1
-            index2+=1
-
-            #resetting the index of the key until the plaintext pointer reaches the end
-            if index2==len(key):
-                index2=0
-        return ciphertext
     def hash_fn(self,text):
         """
         Simple hash function that:
@@ -94,21 +61,23 @@ class PolyAlphabeticCipher:
 def generate_random_strings(num_strings=5, string_length=10):
     random_strings = []
     for _ in range(num_strings):
-        random_string = ''.join(random.choices(string.ascii_letters + string.digits, k=string_length))
+        random_string = ''.join(random.choices(string.ascii_lowercase, k=string_length))
         random_strings.append(random_string)
     return random_strings
     
 if __name__=="__main__":
     obj=PolyAlphabeticCipher()
+    # print(obj.encrypt("jgrhxfjmnq",KEY))
     random_strings = generate_random_strings()
     for i in range(0,len(random_strings)):
         random_strings[i]=random_strings[i]+obj.hash_fn(random_strings[i])
     encrypted=[]
     for i in range(0,len(random_strings)):
-        temp=obj.encrypt(random_strings[i])
+        temp=obj.encrypt(random_strings[i],KEY)
         encrypted.append(temp)
     
     for index, random_string in enumerate(random_strings):
-        print(f"Random String {index + 1}: {random_string} ")
+        temp=obj.encrypt(random_string[:10],KEY)
+        print(f"Random String {index + 1}: {random_string[:10]} Encrypted: {temp}  Decrypted: {obj.decrypt(temp,KEY)}")
         
     
