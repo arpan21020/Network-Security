@@ -58,6 +58,30 @@ class PolyAlphabeticCipher:
             hash_letters.append(chr(val + 65))
             
         return ''.join(hash_letters)
+    
+    def brute_force(self,ciphertext,key):
+        key_list=['a','a','a','a']
+        for i in range(26):
+            key_list[0]=chr(ord('a')+i)
+            for j in range(26):
+                key_list[1]=chr(ord('a')+j)
+                for k in range(26):
+                    key_list[2]=chr(ord('a')+k)
+                    for l in range(26):
+                        key_list[3]=chr(ord('a')+l)
+                        key=''.join(key_list)
+                        print(key)
+                        print(self.decrypt(ciphertext,key))
+                        print('------------------')
+
+    def verify(self,plaintext):
+        PLAINTEXT_LENGTH = len(plaintext)
+        s = plaintext[:PLAINTEXT_LENGTH]
+        hash_s = plaintext[PLAINTEXT_LENGTH:]
+        if self.hash_fn(s) == hash_s:
+            return True
+        return False
+    
 def generate_random_strings(num_strings=5, string_length=10):
     random_strings = []
     for _ in range(num_strings):
