@@ -1,1 +1,0 @@
- Multiplies by the length of the text
