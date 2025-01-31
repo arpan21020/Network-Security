@@ -36,13 +36,11 @@ class PolyAlphabeticCipher:
             val3=(val1-val2)%26
             plaintext+=chr(val3+minus)
         return plaintext
+    
+    
+    
         
     def hash_fn(self,text):
-        """
-        Simple hash function that:
-        1. Sums the position values of each character in the alphabet (a=0, b=1, etc.)
-        2. Multiplies by the length of the text
-        """
         
         # Get sum of ASCII values
         ascii_sum = sum(ord(c) % 97 for c in text)
@@ -50,11 +48,17 @@ class PolyAlphabeticCipher:
         # Generate a 4-letter hash based on the sum
         hash_letters = []
         for i in range(4):
-            # Use different aspects of the ascii_sum to generate each letter
+            # Use different aspects of the ascii_sum to 
+            # generate each letter
             val = (ascii_sum + i * len(text)) % 26
             hash_letters.append(chr(val + 97))
             
         return ''.join(hash_letters)
+    
+    
+    
+    
+        
     def verify(self,plaintext):
         PLAINTEXT_LENGTH = len(plaintext)
         s = plaintext[:PLAINTEXT_LENGTH-4]
@@ -63,7 +67,16 @@ class PolyAlphabeticCipher:
         if self.hash_fn(s) == hash_s:
             return True
         return False
-    def brute_force(self,ciphertext):
+    
+    def is_possible_key(self,encrypted_texts,key):
+        ans=True
+        for i in encrypted_texts:
+            temp=self.decrypt(i,key)
+            ans=ans and self.verify(temp)
+        return ans
+    
+    
+    def brute_force(self,ciphertext,cipher_texts):
         key_list=['a','a','a','a']
         for i in range(26):
             key_list[0]=chr(ord('a')+i)
@@ -78,7 +91,7 @@ class PolyAlphabeticCipher:
                         decryptedtext=self.decrypt(ciphertext,key)
                         # print('------------------')
                         
-                        if(self.verify(decryptedtext)):
+                        if(self.is_possible_key(cipher_texts,key)):
                             return key
         return "none"
 
@@ -101,12 +114,21 @@ if __name__=="__main__":
     for i in range(0,len(random_strings)):
         temp=obj.encrypt(random_strings[i],KEY)
         encrypted.append(temp)
+        print(f"Random String {i+1} : {random_strings[i]} Encrypted : {temp}")
+        
+    # Brute Force Attack
     
-    for index, random_string in enumerate(random_strings):
-        temp=obj.encrypt(random_string,KEY)
-        print(f"Random String {index + 1}: {random_string} Encrypted: {temp} Decrypted: {obj.decrypt(temp,KEY)}")
+    print("Brute force attack..... ")
+    possible_key=obj.brute_force(encrypted[0],encrypted)
+    print("Recovered key:",possible_key)
     
-        print("Attacking :"+obj.brute_force(temp))
+    
+    
+    # for index, random_string in enumerate(random_strings):
+    #     temp=obj.encrypt(random_string,KEY)
+    #     print(f"Random String {index + 1}: {random_string} Encrypted: {temp} Decrypted: {obj.decrypt(temp,KEY)}")
+    
+    #     print("Attacking :"+obj.brute_force(temp))
         
     
         
