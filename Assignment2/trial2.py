@@ -1,6 +1,39 @@
-# DES Implementation from Scratch
+def hex_to_bin(hex_str):
+    """Convert hexadecimal string to binary string."""
+    bin_str = ''
+    for i in range(len(hex_str)):
+        bin_str += bin(int(hex_str[i], 16))[2:].zfill(4)
+    return bin_str
 
-# Initial and Final Permutation Tables
+def bin_to_hex(bin_str):
+    """Convert binary string to hexadecimal string."""
+    hex_str = ''
+    for i in range(0, len(bin_str), 4):
+        hex_str += hex(int(bin_str[i:i+4], 2))[2:].zfill(1)
+    return hex_str.upper()
+
+def permute(k, arr, n):
+    """Permute the bits of k according to the array arr."""
+    permutation = ''
+    for i in range(n):
+        permutation += k[arr[i] - 1]
+    return permutation
+
+def shift_left(k, shifts):
+    """Circular left shift k by shifts positions."""
+    return k[shifts:] + k[:shifts]
+
+def xor(a, b):
+    """XOR two strings of binary numbers."""
+    ans = ''
+    for i in range(len(a)):
+        if a[i] == b[i]:
+            ans += '0'
+        else:
+            ans += '1'
+    return ans
+
+# Initial Permutation (IP)
 IP = [58, 50, 42, 34, 26, 18, 10, 2,
       60, 52, 44, 36, 28, 20, 12, 4,
       62, 54, 46, 38, 30, 22, 14, 6,
@@ -10,439 +43,347 @@ IP = [58, 50, 42, 34, 26, 18, 10, 2,
       61, 53, 45, 37, 29, 21, 13, 5,
       63, 55, 47, 39, 31, 23, 15, 7]
 
-IP_INV = [40, 8, 48, 16, 56, 24, 64, 32,
-          39, 7, 47, 15, 55, 23, 63, 31,
-          38, 6, 46, 14, 54, 22, 62, 30,
-          37, 5, 45, 13, 53, 21, 61, 29,
-          36, 4, 44, 12, 52, 20, 60, 28,
-          35, 3, 43, 11, 51, 19, 59, 27,
-          34, 2, 42, 10, 50, 18, 58, 26,
-          33, 1, 41, 9, 49, 17, 57, 25]
+# Final Permutation (IP^-1)
+FP = [40, 8, 48, 16, 56, 24, 64, 32,
+      39, 7, 47, 15, 55, 23, 63, 31,
+      38, 6, 46, 14, 54, 22, 62, 30,
+      37, 5, 45, 13, 53, 21, 61, 29,
+      36, 4, 44, 12, 52, 20, 60, 28,
+      35, 3, 43, 11, 51, 19, 59, 27,
+      34, 2, 42, 10, 50, 18, 58, 26,
+      33, 1, 41, 9, 49, 17, 57, 25]
 
-# Expansion Table
-E = [32, 1, 2, 3, 4, 5,
-     4, 5, 6, 7, 8, 9,
-     8, 9, 10, 11, 12, 13,
-     12, 13, 14, 15, 16, 17,
-     16, 17, 18, 19, 20, 21,
-     20, 21, 22, 23, 24, 25,
-     24, 25, 26, 27, 28, 29,
-     28, 29, 30, 31, 32, 1]
+# Expansion D-box Table
+expansion_table = [32, 1, 2, 3, 4, 5, 4, 5,
+                  6, 7, 8, 9, 8, 9, 10, 11,
+                  12, 13, 12, 13, 14, 15, 16, 17,
+                  16, 17, 18, 19, 20, 21, 20, 21,
+                  22, 23, 24, 25, 24, 25, 26, 27,
+                  28, 29, 28, 29, 30, 31, 32, 1]
 
-# S-boxes
-S_BOXES = [
+# S-box Tables
+sbox = [
     # S1
-    [
-        [14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
-        [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
-        [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0],
-        [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]
-    ],
+    [[14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7],
+     [0, 15, 7, 4, 14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8],
+     [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0],
+     [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]],
+
     # S2
-    [
-        [15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10],
-        [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5],
-        [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15],
-        [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]
-    ],
+    [[15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10],
+     [3, 13, 4, 7, 15, 2, 8, 14, 12, 0, 1, 10, 6, 9, 11, 5],
+     [0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15],
+     [13, 8, 10, 1, 3, 15, 4, 2, 11, 6, 7, 12, 0, 5, 14, 9]],
+
     # S3
-    [
-        [10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8],
-        [13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1],
-        [13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7],
-        [1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12]
-    ],
+    [[10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8],
+     [13, 7, 0, 9, 3, 4, 6, 10, 2, 8, 5, 14, 12, 11, 15, 1],
+     [13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7],
+     [1, 10, 13, 0, 6, 9, 8, 7, 4, 15, 14, 3, 11, 5, 2, 12]],
+
     # S4
-    [
-        [7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15],
-        [13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9],
-        [10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4],
-        [3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14]
-    ],
+    [[7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15],
+     [13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2, 12, 1, 10, 14, 9],
+     [10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4],
+     [3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11, 12, 7, 2, 14]],
+
     # S5
-    [
-        [2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9],
-        [14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6],
-        [4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14],
-        [11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3]
-    ],
+    [[2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9],
+     [14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10, 3, 9, 8, 6],
+     [4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14],
+     [11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10, 4, 5, 3]],
+
     # S6
-    [
-        [12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11],
-        [10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8],
-        [9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6],
-        [4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13]
-    ],
+    [[12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11],
+     [10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11, 3, 8],
+     [9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6],
+     [4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8, 13]],
+
     # S7
-    [
-        [4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1],
-        [13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6],
-        [1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2],
-        [6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12]
-    ],
+    [[4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1],
+     [13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6],
+     [1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2],
+     [6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12]],
+
     # S8
-    [
-        [13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
-        [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2],
-        [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8],
-        [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]
-    ]
+    [[13, 2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7],
+     [1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2],
+     [7, 11, 4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8],
+     [2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11]]
 ]
 
-# Permutation P
-P = [16, 7, 20, 21, 29, 12, 28, 17,
-     1, 15, 23, 26, 5, 18, 31, 10,
-     2, 8, 24, 14, 32, 27, 3, 9,
-     19, 13, 30, 6, 22, 11, 4, 25]
+# Straight Permutation Table (P-box)
+per = [16, 7, 20, 21,
+       29, 12, 28, 17,
+       1, 15, 23, 26,
+       5, 18, 31, 10,
+       2, 8, 24, 14,
+       32, 27, 3, 9,
+       19, 13, 30, 6,
+       22, 11, 4, 25]
 
-# PC-1 table (Permuted Choice 1 - for key schedule)
-PC1 = [57, 49, 41, 33, 25, 17, 9,
-       1, 58, 50, 42, 34, 26, 18,
-       10, 2, 59, 51, 43, 35, 27,
-       19, 11, 3, 60, 52, 44, 36,
-       63, 55, 47, 39, 31, 23, 15,
-       7, 62, 54, 46, 38, 30, 22,
-       14, 6, 61, 53, 45, 37, 29,
-       21, 13, 5, 28, 20, 12, 4]
+# Parity bit drop table (PC-1)
+keyp = [57, 49, 41, 33, 25, 17, 9,
+        1, 58, 50, 42, 34, 26, 18,
+        10, 2, 59, 51, 43, 35, 27,
+        19, 11, 3, 60, 52, 44, 36,
+        63, 55, 47, 39, 31, 23, 15,
+        7, 62, 54, 46, 38, 30, 22,
+        14, 6, 61, 53, 45, 37, 29,
+        21, 13, 5, 28, 20, 12, 4]
 
-# PC-2 table (Permuted Choice 2 - for key schedule)
-PC2 = [14, 17, 11, 24, 1, 5, 3, 28,
-       15, 6, 21, 10, 23, 19, 12, 4,
-       26, 8, 16, 7, 27, 20, 13, 2,
-       41, 52, 31, 37, 47, 55, 30, 40,
-       51, 45, 33, 48, 44, 49, 39, 56,
-       34, 53, 46, 42, 50, 36, 29, 32]
+# Number of bit shifts for each round
+shift_table = [1, 1, 2, 2,
+              2, 2, 2, 2,
+              1, 2, 2, 2,
+              2, 2, 2, 1]
 
-# Number of left shifts for each round
-SHIFT_SCHEDULE = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
+# Key compression table (PC-2)
+key_comp = [14, 17, 11, 24, 1, 5,
+            3, 28, 15, 6, 21, 10,
+            23, 19, 12, 4, 26, 8,
+            16, 7, 27, 20, 13, 2,
+            41, 52, 31, 37, 47, 55,
+            30, 40, 51, 45, 33, 48,
+            44, 49, 39, 56, 34, 53,
+            46, 42, 50, 36, 29, 32]
 
-def permute(block, table):
-    """Permute the block according to the given table"""
-    return [block[i-1] for i in table]
-
-def left_shift(half, shift_count):
-    """Perform a circular left shift on the half"""
-    return half[shift_count:] + half[:shift_count]
-
-def string_to_bits(text):
-    """Convert a string to a list of bits"""
-    result = []
-    for char in text:
-        bits = bin(ord(char))[2:].zfill(8)
-        result.extend([int(b) for b in bits])
-    return result
-
-def bits_to_string(bits):
-    """Convert a list of bits to a string"""
-    result = ""
-    for i in range(0, len(bits), 8):
-        byte = bits[i:i+8]
-        result += chr(int(''.join(map(str, byte)), 2))
-    return result
-
-def hex_to_bits(hex_string):
-    """Convert a hex string to a list of bits"""
-    result = []
-    for char in hex_string:
-        bits = bin(int(char, 16))[2:].zfill(4)
-        result.extend([int(b) for b in bits])
-    return result
-
-def bits_to_hex(bits):
-    """Convert a list of bits to a hex string"""
-    result = ""
-    for i in range(0, len(bits), 4):
-        nibble = bits[i:i+4]
-        result += hex(int(''.join(map(str, nibble)), 2))[2:]
-    return result
-
-def apply_expansion(block):
-    """Apply the expansion permutation to a 32-bit block"""
-    return permute(block, E)
-
-def apply_substitution(expanded_block):
-    """Apply S-boxes substitution to a 48-bit block"""
-    result = []
-    for i in range(8):
-        # Extract a 6-bit chunk
-        chunk = expanded_block[i*6:(i+1)*6]
-        
-        # Calculate row and column
-        row = (chunk[0] << 1) + chunk[5]
-        col = (chunk[1] << 3) + (chunk[2] << 2) + (chunk[3] << 1) + chunk[4]
-        
-        # Get the value from the S-box
-        val = S_BOXES[i][row][col]
-        
-        # Convert the value to 4 bits
-        bits = [int(b) for b in bin(val)[2:].zfill(4)]
-        result.extend(bits)
+def generate_keys(key):
+    """Generate 16 subkeys for DES rounds."""
+    # Convert key to binary
+    key = hex_to_bin(key)
     
-    return result
-
-def xor(a, b):
-    """XOR two lists of bits"""
-    return [a[i] ^ b[i] for i in range(len(a))]
-
-def generate_subkeys(key):
-    """Generate 16 subkeys from the main key"""
-    # Convert the key to binary if it's a string
-    if isinstance(key, str):
-        if len(key) == 16:  # Hex key
-            key_bits = hex_to_bits(key)
-        else:  # ASCII key
-            key_bits = string_to_bits(key)
-            if len(key_bits) < 64:
-                key_bits.extend([0] * (64 - len(key_bits)))
-            elif len(key_bits) > 64:
-                key_bits = key_bits[:64]
-    else:
-        key_bits = key
+    # Parity bit drop (PC-1): Convert 64-bit key to 56-bit key
+    key = permute(key, keyp, 56)
     
-    # Apply PC1 permutation
-    key_pc1 = permute(key_bits, PC1)
+    # Splitting: Split the 56-bit key into two 28-bit halves
+    left = key[0:28]
+    right = key[28:56]
     
-    # Split the key into left and right halves
-    left_half = key_pc1[:28]
-    right_half = key_pc1[28:]
+    rkb = []  # Round keys binary
+    rk = []   # Round keys hex
     
-    subkeys = []
     for i in range(16):
-        # Apply the shift schedule
-        left_half = left_shift(left_half, SHIFT_SCHEDULE[i])
-        right_half = left_shift(right_half, SHIFT_SCHEDULE[i])
+        # Shifting according to shift table
+        left = shift_left(left, shift_table[i])
+        right = shift_left(right, shift_table[i])
         
-        # Combine the halves
-        combined = left_half + right_half
+        # Combining: Combine the two 28-bit halves
+        combined = left + right
         
-        # Apply PC2 permutation
-        subkey = permute(combined, PC2)
-        subkeys.append(subkey)
+        # Key Compression (PC-2): Reduce from 56 bits to 48 bits
+        round_key = permute(combined, key_comp, 48)
+        
+        rkb.append(round_key)
+        rk.append(bin_to_hex(round_key))
     
-    return subkeys
+    return rkb, rk
 
-def f_function(right_half, subkey):
-    """The Feistel (F) function"""
-    # Expand the right half from 32 to 48 bits
-    expanded = apply_expansion(right_half)
+def f_function(right, rkb_i):
+    """Feistel (F) function used in each round."""
+    # 1. Expansion: Expand 32-bit right half to 48 bits
+    right_expanded = permute(right, expansion_table, 48)
     
-    # XOR with the subkey
-    xored = xor(expanded, subkey)
+    # 2. XOR with round key
+    xor_result = xor(right_expanded, rkb_i)
     
-    # Apply S-box substitution
-    substituted = apply_substitution(xored)
+    # 3. S-box substitution: Transform 48 bits to 32 bits
+    sbox_result = ''
+    for j in range(8):
+        # Get the 6-bit chunk for current S-box
+        chunk = xor_result[j*6:j*6+6]
+        
+        # Calculate row (first and last bit) and column (middle 4 bits)
+        row = int(chunk[0] + chunk[5], 2)
+        col = int(chunk[1:5], 2)
+        
+        # Get value from S-box and convert to 4-bit binary
+        val = sbox[j][row][col]
+        sbox_result += bin(val)[2:].zfill(4)
     
-    # Apply permutation P
-    permuted = permute(substituted, P)
-    
-    return permuted
+    # 4. Permutation: Rearrange the 32 bits
+    return permute(sbox_result, per, 32)
 
-def des_encrypt_block(plaintext, key):
-    """Encrypt a 64-bit block using DES"""
-    # Convert the plaintext to binary if it's a string
-    if isinstance(plaintext, str):
-        if len(plaintext) == 16:  # Hex plaintext
-            plaintext_bits = hex_to_bits(plaintext)
-        else:  # ASCII plaintext
-            plaintext_bits = string_to_bits(plaintext)
-            if len(plaintext_bits) < 64:
-                plaintext_bits.extend([0] * (64 - len(plaintext_bits)))
-            elif len(plaintext_bits) > 64:
-                plaintext_bits = plaintext_bits[:64]
-    else:
-        plaintext_bits = plaintext
+def encrypt(plain_text, key, debug=False):
+    """Encrypt plaintext using DES algorithm."""
+    # Convert plaintext to binary
+    plain_text = hex_to_bin(plain_text)
     
-    # Generate subkeys
-    subkeys = generate_subkeys(key)
+    # Initial Permutation (IP)
+    plain_text = permute(plain_text, IP, 64)
     
-    # Apply initial permutation
-    permuted = permute(plaintext_bits, IP)
+    if debug:
+        print("After initial permutation:", bin_to_hex(plain_text))
     
-    # Split into left and right halves
-    left_half = permuted[:32]
-    right_half = permuted[32:]
+    # Generate subkeys for all rounds
+    rkb, rk = generate_keys(key)
     
-    # Store the intermediate states for verification
+    # Split the permuted block into left and right halves
+    left = plain_text[0:32]
+    right = plain_text[32:64]
+    
+    # Store round outputs for verification
     round_outputs = []
     
     # 16 rounds of encryption
     for i in range(16):
-        round_outputs.append((left_half.copy(), right_half.copy()))
+        if debug:
+            print(f"Round {i+1}:")
+            print(f"  Left: {bin_to_hex(left)}, Right: {bin_to_hex(right)}")
+            print(f"  Round Key: {rk[i]}")
         
-        # Apply F function and XOR with left half
-        f_output = f_function(right_half, subkeys[i])
-        new_right = xor(left_half, f_output)
+        # Save original right half before modification (needed for swap)
+        original_right = right
         
-        # Update left and right halves for next round
-        left_half = right_half
-        right_half = new_right
+        # Apply F-function to right half and XOR with left half
+        right_processed = f_function(right, rkb[i])
+        new_right = xor(left, right_processed)
+        
+        # New left half is original right half (swap happens here)
+        left = original_right
+        
+        # New right half is result of XOR
+        right = new_right
+        
+        # Store combined output after this round
+        round_output = left + right
+        round_outputs.append(round_output)
+        
+        if debug:
+            print(f"  After round {i+1}: {bin_to_hex(round_output)}")
     
-    # Store the final state before swap
-    round_outputs.append((left_half.copy(), right_half.copy()))
+    # After final round, swap one last time (undo last swap)
+    # Note: in DES, we need to swap after the 16th round to make encryption/decryption symmetric
+    left, right = right, left
     
-    # Final swap of left and right halves
-    final_block = right_half + left_half
+    # Combine final left and right halves
+    combined = left + right
     
-    # Apply final permutation
-    ciphertext_bits = permute(final_block, IP_INV)
+    # Final Permutation (IP^-1)
+    cipher_text = permute(combined, FP, 64)
     
-    return ciphertext_bits, round_outputs
+    if debug:
+        print("Final cipher text:", bin_to_hex(cipher_text))
+    
+    return bin_to_hex(cipher_text), round_outputs
 
-def des_decrypt_block(ciphertext, key):
-    """Decrypt a 64-bit block using DES"""
-    # Convert the ciphertext to binary if it's a string
-    if isinstance(ciphertext, str):
-        if len(ciphertext) == 16:  # Hex ciphertext
-            ciphertext_bits = hex_to_bits(ciphertext)
-        else:  # ASCII ciphertext
-            ciphertext_bits = string_to_bits(ciphertext)
-    else:
-        ciphertext_bits = ciphertext
+def decrypt(cipher_text, key, debug=False):
+    """Decrypt ciphertext using DES algorithm."""
+    # Convert ciphertext to binary
+    cipher_text = hex_to_bin(cipher_text)
     
-    # Generate subkeys (same as encryption but in reverse order)
-    subkeys = generate_subkeys(key)
-    subkeys.reverse()
+    # Initial Permutation (IP)
+    cipher_text = permute(cipher_text, IP, 64)
     
-    # Apply initial permutation
-    permuted = permute(ciphertext_bits, IP)
+    if debug:
+        print("After initial permutation (decrypt):", bin_to_hex(cipher_text))
+    
+    # Generate subkeys (same as encryption, but use in reverse order)
+    rkb, rk = generate_keys(key)
+    rkb = rkb[::-1]  # Reverse the list of keys for decryption
+    rk = rk[::-1]    # For debugging only
     
     # Split into left and right halves
-    left_half = permuted[:32]
-    right_half = permuted[32:]
+    left = cipher_text[0:32]
+    right = cipher_text[32:64]
     
-    # Store the intermediate states for verification
+    # Store round outputs for verification
     round_outputs = []
     
-    # 16 rounds of decryption
+    # 16 rounds of decryption (identical to encryption, but with keys in reverse order)
     for i in range(16):
-        round_outputs.append((left_half.copy(), right_half.copy()))
+        if debug:
+            print(f"Decryption Round {i+1}:")
+            print(f"  Left: {bin_to_hex(left)}, Right: {bin_to_hex(right)}")
+            print(f"  Round Key: {rk[i]}")
         
-        # Apply F function and XOR with left half
-        f_output = f_function(right_half, subkeys[i])
-        new_right = xor(left_half, f_output)
+        # Save original right half before modification (needed for swap)
+        original_right = right
         
-        # Update left and right halves for next round
-        left_half = right_half
-        right_half = new_right
+        # Apply F-function to right half and XOR with left half
+        right_processed = f_function(right, rkb[i])  
+        new_right = xor(left, right_processed)
+        
+        # New left half is original right half
+        left = original_right
+        
+        # New right half is result of XOR
+        right = new_right
+        
+        # Store combined output after this round
+        round_output = left + right
+        round_outputs.append(round_output)
+        
+        if debug:
+            print(f"  After decryption round {i+1}: {bin_to_hex(round_output)}")
     
-    # Store the final state before swap
-    round_outputs.append((left_half.copy(), right_half.copy()))
+    # After final round, swap one last time (undo last swap)
+    left, right = right, left
     
-    # Final swap of left and right halves
-    final_block = right_half + left_half
+    # Combine final left and right halves
+    combined = left + right
     
-    # Apply final permutation
-    plaintext_bits = permute(final_block, IP_INV)
+    # Final Permutation (IP^-1)
+    plain_text = permute(combined, FP, 64)
     
-    return plaintext_bits, round_outputs
+    if debug:
+        print("Final decrypted text:", bin_to_hex(plain_text))
+    
+    return bin_to_hex(plain_text), round_outputs
 
-def pad_text(text):
-    """Pad the text to a multiple of 8 bytes (64 bits) using PKCS#7"""
-    padding_length = 8 - (len(text) % 8)
-    padded_text = text + chr(padding_length) * padding_length
-    return padded_text
-
-def unpad_text(text):
-    """Remove PKCS#7 padding"""
-    padding_length = ord(text[-1])
-    return text[:-padding_length]
-
-def des_encrypt(plaintext, key, output_format='hex'):
-    """Encrypt plaintext using DES with the given key"""
-    # Pad the plaintext to a multiple of 64 bits
-    padded_text = pad_text(plaintext)
-    
-    ciphertext_bits = []
-    all_round_outputs = []
-    
-    # Process each 64-bit block
-    for i in range(0, len(padded_text), 8):
-        block = padded_text[i:i+8]
-        block_bits = string_to_bits(block)
-        encrypted_block, round_outputs = des_encrypt_block(block_bits, key)
-        ciphertext_bits.extend(encrypted_block)
-        all_round_outputs.append(round_outputs)
-    
-    if output_format == 'hex':
-        return bits_to_hex(ciphertext_bits), all_round_outputs
-    else:  # 'text'
-        return bits_to_string(ciphertext_bits), all_round_outputs
-
-def des_decrypt(ciphertext, key, input_format='hex'):
-    """Decrypt ciphertext using DES with the given key"""
-    if input_format == 'hex':
-        ciphertext_bits = hex_to_bits(ciphertext)
-    else:  # 'text'
-        ciphertext_bits = string_to_bits(ciphertext)
-    
-    plaintext_bits = []
-    all_round_outputs = []
-    
-    # Process each 64-bit block
-    for i in range(0, len(ciphertext_bits), 64):
-        block_bits = ciphertext_bits[i:i+64]
-        decrypted_block, round_outputs = des_decrypt_block(block_bits, key)
-        plaintext_bits.extend(decrypted_block)
-        all_round_outputs.append(round_outputs)
-    
-    plaintext = bits_to_string(plaintext_bits)
-    
-    # Remove padding
-    try:
-        plaintext = unpad_text(plaintext)
-    except:
-        pass  # In case there's no valid padding
-    
-    return plaintext, all_round_outputs
-
-def verify_encryption_decryption(plaintext, key):
-    """Verify that encryption followed by decryption yields the original plaintext"""
-    # Encrypt
-    ciphertext, encrypt_rounds = des_encrypt(plaintext, key)
-    
-    # Decrypt
-    decrypted, decrypt_rounds = des_decrypt(ciphertext, key)
-    
-    print(f"Original: {plaintext}")
-    print(f"Encrypted (hex): {ciphertext}")
-    print(f"Decrypted: {decrypted}")
-    print(f"Encryption successful: {plaintext == decrypted}")
-    
-    return encrypt_rounds, decrypt_rounds
-
-def verify_round_outputs(plaintext, key):
-    """Verify that specific rounds in encryption match corresponding rounds in decryption"""
-    encrypt_rounds, decrypt_rounds = verify_encryption_decryption(plaintext, key)
-    
-    # Verify that output of 1st encryption round matches output of 15th decryption round
-    first_enc_output = encrypt_rounds[0][0][0] + encrypt_rounds[0][0][1]  # First block, first round
-    fifteenth_dec_output = decrypt_rounds[0][14][0] + decrypt_rounds[0][14][1]  # First block, fifteenth round
-    
-    print("\nVerifying 1st encryption round == 15th decryption round:", end=" ")
-    print(first_enc_output == fifteenth_dec_output)
-    
-    # Verify that output of 14th encryption round matches output of 2nd decryption round
-    fourteenth_enc_output = encrypt_rounds[0][13][0] + encrypt_rounds[0][13][1]  # First block, fourteenth round
-    second_dec_output = decrypt_rounds[0][1][0] + decrypt_rounds[0][1][1]  # First block, second round
-    
-    print("Verifying 14th encryption round == 2nd decryption round:", end=" ")
-    print(fourteenth_enc_output == second_dec_output)
-
-# Test with multiple plaintext-key pairs
-def run_tests():
+def verify_des(debug=False):
+    """Verify DES encryption/decryption with test cases and check round equivalences."""
+    # Test cases with plaintext and key
     test_cases = [
-        ("Hello123", "SecretK1"),
-        ("TestTest", "KeyKey12"),
-        ("12345678", "87654321")
+        {
+            'plaintext': '0123456789ABCDEF',
+            'key': '133457799BBCDFF1'
+        },
+        {
+            'plaintext': 'FEDCBA9876543210',
+            'key': 'AABBCCDDEEFF0011'
+        },
+        {
+            'plaintext': '0000000000000000',
+            'key': 'FFFFFFFFFFFFFFFF'
+        }
     ]
     
-    for i, (plaintext, key) in enumerate(test_cases, 1):
-        print(f"\n----- Test Case {i} -----")
+    for i, test in enumerate(test_cases):
+        plaintext = test['plaintext']
+        key = test['key']
+        
+        print(f"\nTest Case {i+1}:")
         print(f"Plaintext: {plaintext}")
         print(f"Key: {key}")
-        verify_round_outputs(plaintext, key)
-        print("-----------------------")
+        
+        # Encrypt
+        ciphertext, enc_rounds = encrypt(plaintext, key, debug)
+        print(f"Ciphertext: {ciphertext}")
+        
+        # Decrypt
+        decrypted, dec_rounds = decrypt(ciphertext, key, debug)
+        print(f"Decrypted: {decrypted}")
+        
+        # Verify (a): Check if decryption yields original plaintext
+        print(f"a. Original plaintext recovered: {plaintext == decrypted}")
+        
+        # Verify (b): Check if output of 1st encryption round equals output of 15th decryption round
+        first_enc_round = bin_to_hex(enc_rounds[0])
+        fifteenth_dec_round = bin_to_hex(dec_rounds[14])
+        print(f"b. 1st encryption round equals 15th decryption round: {first_enc_round == fifteenth_dec_round}")
+        if debug and first_enc_round != fifteenth_dec_round:
+            print(f"   First encryption round: {first_enc_round}")
+            print(f"   Fifteenth decryption round: {fifteenth_dec_round}")
+        
+        # Verify (c): Check if output of 14th encryption round equals output of 2nd decryption round
+        fourteenth_enc_round = bin_to_hex(enc_rounds[13])
+        second_dec_round = bin_to_hex(dec_rounds[1])
+        print(f"c. 14th encryption round equals 2nd decryption round: {fourteenth_enc_round == second_dec_round}")
+        if debug and fourteenth_enc_round != second_dec_round:
+            print(f"   Fourteenth encryption round: {fourteenth_enc_round}")
+            print(f"   Second decryption round: {second_dec_round}")
 
-# Run the tests
+# Run verification
 if __name__ == "__main__":
-    run_tests()
+    verify_des(debug=False)  # Set to True for detailed debugging output
