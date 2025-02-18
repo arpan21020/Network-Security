@@ -188,8 +188,7 @@ test_cases = [
     {'plaintext': 'FEDCBA9876543210', 'key': 'AABBCCDDEEFF0011'},
     {'plaintext': '0000000000000000', 'key': 'FFFFFFFFFFFFFFFF'}
 ]
-f=open("encryption.txt","w")
-f2=open("decryption.txt","w")
+
 for pair in range(3):
     print(f"\n=== Pair {pair+1} Encryption ===")
     
@@ -214,7 +213,6 @@ for pair in range(3):
     plaintext_after_ip = [0]*64
     for i in range(1, 65):
         plaintext_after_ip[i-1] = int(plaintext[ip_table[i]-1])
-    f.write(f"After initial permutation: {binary_to_hex(''.join(str(i) for i in plaintext_after_ip))}\n")
     print(f"After initial permutation: {binary_to_hex(''.join(str(i) for i in plaintext_after_ip))}\n")
     
     # Splitting plaintext into halves
@@ -231,7 +229,6 @@ for pair in range(3):
         for i in round_key:
             rk += str(i)
         print(f"Round key: {binary_to_hex(rk)}")
-        f.write(f"Round key: {binary_to_hex(rk)}\n")
         out = R_function(R, round_key)
         R = []
         for j in range(0, 32):
@@ -244,7 +241,6 @@ for pair in range(3):
             round_output += str(temp[i])
         round_hex = binary_to_hex(round_output).upper()
         print(f"Output in Round {round+1} is {round_hex}\n")
-        f.write(f"Output in Round {round+1} is {round_hex}\n")
         enc_round_outputs.append(round_hex)
     output = R + L
     final = [output[final_permutation[i+1]-1] for i in range(len(output))]
@@ -253,7 +249,6 @@ for pair in range(3):
         final_str += str(i)
     final_ciphertext = binary_to_hex(final_str).upper()
     print(f"Final encrypted output is {final_ciphertext}")
-    f.write(f"Final encrypted output is {final_ciphertext}\n-----------------------------------------\n")
     
     encryption_results.append({
         "round_outputs": enc_round_outputs,
@@ -295,7 +290,6 @@ for pair in range(3):
         for i in round_key:
             rk += str(i)
         print(f"Round key: {binary_to_hex(rk)}")
-        f2.write(f"Round key: {binary_to_hex(rk)}\n")
         out = R_function(R, round_key)
         R = []
         for j in range(0, 32):
@@ -313,7 +307,6 @@ for pair in range(3):
         round_hex = binary_to_hex(round_output).upper()
         round_hex_match=binary_to_hex(round_output_match).upper()
         print(f"Output in Round {round+1} is {round_hex}")
-        f2.write(f"Output in Round {round+1} is {round_hex}\n")
         dec_round_outputs.append(round_hex_match)
     output = R + L
     output_match=R_orig+L
@@ -323,14 +316,12 @@ for pair in range(3):
         final_str += str(i)
     final_plaintext = binary_to_hex(final_str).upper()
     print(f"Final output is {final_plaintext}")
-    f2.write(f"Final output is {final_plaintext}\n---------------------\n")
     decryption_results.append({
         "round_outputs": dec_round_outputs,
         "plaintext": final_plaintext
     })
 
-f.close()
-f2.close()
+
 #------------------------------
 # SUMMARY OUTPUT
 #------------------------------
