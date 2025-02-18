@@ -1,0 +1,102 @@
+Round key: cb3d8b0e17f5
+Output in Round 1 is 43423234C28C960D
+Round key: bf918d3d3f0a
+Output in Round 2 is C28C960D18C3155A
+Round key: 5f43b7f2e73a
+Output in Round 3 is 18C3155A75BD1858
+Round key: 97c5d1faba41
+Output in Round 4 is 75BD1858C5783C78
+Round key: 7571f59467e9
+Output in Round 5 is C5783C78B7D5D7B2
+Round key: 215fd3ded386
+Output in Round 6 is B7D5D7B2247CC67A
+Round key: b1f347ba464f
+Output in Round 7 is 247CC67AD5694B90
+Round key: e0dbebede781
+Output in Round 8 is D5694B90064ABA10
+Round key: f78a3ac13bfb
+Output in Round 9 is 064ABA10E967CD69
+Round key: ec84b7f618bc
+Output in Round 10 is E967CD698A4FA637
+Round key: 63a53e507b2f
+Output in Round 11 is 8A4FA63777220045
+Round key: 7cec07eb53a8
+Output in Round 12 is 77220045A25C0BF4
+Round key: 72add6db351d
+Output in Round 13 is A25C0BF4CC017709
+Round key: 55fc8a42cf99
+Output in Round 14 is CC017709EF4A6544
+Round key: 79aed9dbc9e5
+Output in Round 15 is EF4A6544F0AAF0AA
+Round key: 1b02effc7072
+Output in Round 16 is F0AAF0AACC00CCFF
+Final output is 0123456789ABCDEF
+---------------------
+Round key: b64f5eed965d
+Output in Round 1 is DFBD3951C9D4B3BD
+Round key: 95e3d6d1b55d
+Output in Round 2 is C9D4B3BDCFC40095
+Round key: e1d8f946cbd8
+Output in Round 3 is CFC4009577F0D6D1
+Round key: 791763df4967
+Output in Round 4 is 77F0D6D1075CDB62
+Round key: a2f78f2e17b3
+Output in Round 5 is 075CDB626409038E
+Round key: cdeb66a3fd8f
+Output in Round 6 is 6409038EA18037D4
+Round key: d2dc716aa0fd
+Output in Round 7 is A18037D4E11ECE47
+Round key: 5437ec557cc5
+Output in Round 8 is E11ECE47D883EA78
+Round key: 65748e9467ec
+Output in Round 9 is D883EA789A52324F
+Round key: 39ae5fdf9306
+Output in Round 10 is 9A52324F5EE61DFD
+Round key: dab983b3465b
+Output in Round 11 is 5EE61DFD390C5150
+Round key: 77cfa8edeb91
+Output in Round 12 is 390C5150C200210F
+Round key: cd64db8a6cf6
+Output in Round 13 is C200210F487C32A9
+Round key: 0bbd7d3cdd25
+Output in Round 14 is 487C32A902FC6459
+Round key: 6e7b011bf6ea
+Output in Round 15 is 02FC64590F550F55
+Round key: 365f93eb96a8
+Output in Round 16 is 0F550F5533FF3300
+Final output is FEDCBA9876543210
+---------------------
+Round key: ffffffffffff
+Output in Round 1 is F7B6DFD7472AC861
+Round key: ffffffffffff
+Output in Round 2 is 472AC861044D9D35
+Round key: ffffffffffff
+Output in Round 3 is 044D9D35E6A1CD99
+Round key: ffffffffffff
+Output in Round 4 is E6A1CD9938E7367E
+Round key: ffffffffffff
+Output in Round 5 is 38E7367E4EA3E26E
+Round key: ffffffffffff
+Output in Round 6 is 4EA3E26EDFFFA9ED
+Round key: ffffffffffff
+Output in Round 7 is DFFFA9ED9D6B37D1
+Round key: ffffffffffff
+Output in Round 8 is 9D6B37D1F13EAE1E
+Round key: ffffffffffff
+Output in Round 9 is F13EAE1E7AC5C496
+Round key: ffffffffffff
+Output in Round 10 is 7AC5C49620D2603D
+Round key: ffffffffffff
+Output in Round 11 is 20D2603D07882D6C
+Round key: ffffffffffff
+Output in Round 12 is 07882D6C0461A8CE
+Round key: ffffffffffff
+Output in Round 13 is 0461A8CE003184BB
+Round key: ffffffffffff
+Output in Round 14 is 003184BB38DBF9CB
+Round key: ffffffffffff
+Output in Round 15 is 38DBF9CB00000000
+Round key: ffffffffffff
+Output in Round 16 is 0000000000000000
+Final output is 0000000000000000
+---------------------

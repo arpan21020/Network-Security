@@ -303,14 +303,20 @@ for pair in range(3):
         L = R_orig
         R_orig = R
         round_output = ""
-        temp = L + R 
+        round_output_match = ""
+        temp = L + R
+        temp_match=R+L
         for i in range(len(R+L)):
             round_output += str(temp[i])
+        for i in range(len(R+L)):
+            round_output_match += str(temp_match[i])
         round_hex = binary_to_hex(round_output).upper()
+        round_hex_match=binary_to_hex(round_output_match).upper()
         print(f"Output in Round {round+1} is {round_hex}")
         f2.write(f"Output in Round {round+1} is {round_hex}\n")
-        dec_round_outputs.append(round_hex)
+        dec_round_outputs.append(round_hex_match)
     output = R + L
+    output_match=R_orig+L
     final = [output[final_permutation[i+1]-1] for i in range(len(output))]
     final_str = ""
     for i in final:
@@ -348,13 +354,13 @@ for i in range(3):
 print("\n=== VERIFICATION OF ROUND OUTPUTS ===")
 for i in range(3):
     enc_round1 = encryption_results[i]["round_outputs"][0]
-    dec_round15 = decryption_results[i]["round_outputs"][15]
+    dec_round15 = decryption_results[i]["round_outputs"][14]
     if enc_round1 == dec_round15:
         print(f"Pair {i+1}: Encryption Round 1 equals Decryption Round 15: {enc_round1}")
     else:
         print(f"Pair {i+1}: MISMATCH! Encryption Round 1: {enc_round1}, Decryption Round 15: {dec_round15}")
     
-    enc_round14 = encryption_results[i]["round_outputs"][14]
+    enc_round14 = encryption_results[i]["round_outputs"][13]
     dec_round2 = decryption_results[i]["round_outputs"][1]
     if enc_round14 == dec_round2:
         print(f"Pair {i+1}: Encryption Round 14 equals Decryption Round 2: {enc_round14}")
