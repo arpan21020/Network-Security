@@ -1,72 +1,115 @@
 import rsa_utils
-import base64
+import zmq
+import threading
+import json
+from datetime import datetime, timedelta
 
 class CertificationAuthority:
-    def __init__(self):
+    def __init__(self, host="*", port=5555):
         # CA's own keypair
         p = rsa_utils.generate_prime(1000, 5000)
         q = rsa_utils.generate_prime(1000, 5000)
         self.private_key, self.public_key = rsa_utils.generate_keypair(p, q)
         
-        # Store client certificates
+        # Store client certificates (not just public keys)
         self.client_certificates = {}
-        self.client_public_keys = {}
         
         # CA identifier
         self.id = "MAIN_CA_2025"
+        
+        # ZMQ setup
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REP)
+        self.socket.bind(f"tcp://{host}:{port}")
+        print(f"Server listening on tcp://{host}:{port}")
+        # Start server thread
+        self.running = True
+        self.server_thread = threading.Thread(target=self._run_server)
+        self.server_thread.start()
+        
+    def _run_server(self):
+        """Main server loop to handle client requests."""
+        while self.running:
+            try:
+                message = self.socket.recv_json()
+                print("Message recieved:",message)
+                response = self._handle_request(message)
+                self.socket.send_json(response)
+            except zmq.ZMQError:
+                if self.running:
+                    raise
+                break
     
-    def register_client(self, client_id, client_public_key):
-        """Register a client's public key."""
-        self.client_public_keys[client_id] = client_public_key
+    def _handle_request(self, message):
+        """Handle incoming client requests."""
+        action = message.get('action')
+        client_id = message.get('client_id')
+        data = message.get('data', {})
+        
+        try:
+            if action == 'register':
+                public_key = data['public_key']
+                port=data['port']
+                # Generate and store certificate immediately during registration
+                certificate = self.generate_certificate(client_id, public_key,port)
+                self.client_certificates[client_id] = certificate
+                print(self.client_certificates)
+                return {'status': 'success','authority_key':self.public_key,'message': 'Client registered and certificate generated'}
+                
+            elif action == 'get_certificate':
+                # Return the full certificate instead of just public key
+                target_client_id=data["target_client_id"]
+                certificate = self.client_certificates.get(target_client_id)
+                if certificate:
+                    return {'status': 'success', 'certificate': certificate}
+                return {'status': 'error', 'message': 'Certificate not found'}
+                
+            elif action == 'verify_certificate':
+                cert = data['certificate']
+                valid, cert_data = self.verify_certificate(cert)
+                return {
+                    'status': 'success',
+                    'valid': valid,
+                    'cert_data': cert_data if valid else None
+                }
+                
+            else:
+                return {'status': 'error', 'message': 'Invalid action'}
+                
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}
     
-    def generate_certificate(self, client_id, client_public_key, duration_seconds=3600):
+    def stop(self):
+        """Stop the server."""
+        self.running = False
+        self.socket.close()
+        self.context.term()
+        self.server_thread.join()
+    
+    def generate_certificate(self, client_id, client_public_key, port ,duration_seconds=3600):
         """Generate a certificate for a client."""
-        # Current timestamp
         timestamp = int(rsa_utils.time.time())
         
-        # Certificate contents
         cert_data = {
             'client_id': client_id,
             'public_key': client_public_key,
-            'timestamp': rsa_utils.encode_timestamp(timestamp),
+            'port':port,
+            'timestamp': timestamp,
             'duration': duration_seconds,
             'ca_id': self.id
         }
         
         # Encrypt certificate contents with CA's private key
-        encoded_cert_data = str(cert_data).encode()
-        encrypted_cert = rsa_utils.encrypt(self.private_key, encoded_cert_data.decode())
+        # encoded_cert_data = str(cert_data).encode()
+        encrypted_cert = rsa_utils.encrypt(self.private_key, str(cert_data))
         
-        # Construct full certificate
         certificate = {
             'plain_data': cert_data,
             'encrypted_data': encrypted_cert
         }
         
-        # Store certificate
-        self.client_certificates[client_id] = certificate
-        
         return certificate
     
-    def verify_certificate(self, certificate):
-        """Verify a certificate's authenticity and validity."""
-        try:
-            # Decrypt with CA's public key
-            decrypted_data = rsa_utils.decrypt(self.public_key, certificate['encrypted_data'])
-            cert_data = eval(decrypted_data)
-            
-            # Check timestamp validity
-            timestamp = rsa_utils.decode_timestamp(cert_data['timestamp'])
-            valid = rsa_utils.is_timestamp_valid(timestamp, cert_data['duration'])
-            
-            return valid, cert_data
-        except Exception as e:
-            return False, None
     
-    def get_client_certificate(self, client_id):
-        """Retrieve a client's certificate."""
-        return self.client_certificates.get(client_id)
-    
-    def get_client_public_key(self, client_id):
-        """Retrieve a client's public key."""
-        return self.client_public_keys.get(client_id)
+if __name__=="__main__":
+    ca=CertificationAuthority()
