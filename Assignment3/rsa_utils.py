@@ -68,18 +68,3 @@ def decrypt(pk, ciphertext):
     # Convert back to text
     plain = [chr(pow(char, key, n)) for char in ciphertext]
     return ''.join(plain)
-
-def encode_timestamp(timestamp=None):
-    """Encode timestamp to a fixed-length string."""
-    if timestamp is None:
-        timestamp = int(time.time())
-    return base64.b64encode(str(timestamp).encode()).decode()
-
-def decode_timestamp(encoded_timestamp):
-    """Decode timestamp from encoded string."""
-    return int(base64.b64decode(encoded_timestamp.encode()).decode())
-
-def is_timestamp_valid(issued_timestamp, duration_seconds):
-    """Check if timestamp is still valid."""
-    current_time = int(time.time())
-    return current_time <= (issued_timestamp + duration_seconds)
