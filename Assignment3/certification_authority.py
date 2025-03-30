@@ -53,7 +53,9 @@ class CertificationAuthority:
                 # Generate and store certificate immediately during registration
                 certificate = self.generate_certificate(client_id, public_key,port)
                 self.client_certificates[client_id] = certificate
-                print(self.client_certificates)
+                # print(self.client_certificates)
+                with open("certificate_logs.txt","w") as f:
+                    json.dump(self.client_certificates,f,indent=4)
                 return {'status': 'success','authority_key':self.public_key,'message': 'Client registered and certificate generated'}
                 
             elif action == 'get_certificate':

@@ -92,7 +92,8 @@ class Client:
         """Encrypt and send a message to another client."""
         if target_client_id not in self.other_certificates:
             # Try to get certificate first
-            if not self.get_client_certificate(target_client_id):
+            
+            # if not self.get_client_certificate(target_client_id):
                 raise ValueError(f"Cannot send message. No valid certificate for {target_client_id}")
         
         # Get public key from verified certificate
@@ -159,6 +160,7 @@ if __name__ == "__main__":
             elif x == 2:
                 target_client = input("Enter target client_id: ")
                 msg = input("Enter message to send: ")
+                
                 try:
                     ack = client.send_encrypted_message(target_client, msg)
                     print(f"Message sent. Acknowledgment: {ack}")
