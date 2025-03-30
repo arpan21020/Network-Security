@@ -2,6 +2,28 @@ import math
 import random
 import time
 import base64
+import hashlib
+
+def sha256_hash(data):
+    """Generate SHA-256 hash of the data."""
+    if isinstance(data, str):
+        data = data.encode('utf-8')
+    return hashlib.sha256(data).hexdigest()
+
+def sign(private_key, data):
+    """Create a digital signature by hashing then encrypting the data."""
+    data_hash = sha256_hash(str(data))
+    encrypted_hash = encrypt(private_key, data_hash)
+    return encrypted_hash
+
+def verify_signature(public_key, data, signature):
+    """Verify a signature by decrypting it and comparing with data hash."""
+    try:
+        decrypted_hash = decrypt(public_key, signature)
+        data_hash = sha256_hash(str(data))
+        return decrypted_hash == data_hash
+    except:
+        return False
 
 def is_prime(n):
     """Check if a number is prime."""

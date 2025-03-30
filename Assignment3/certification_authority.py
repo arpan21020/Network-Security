@@ -100,14 +100,16 @@ class CertificationAuthority:
             'duration': duration_seconds,
             'ca_id': self.id
         }
+        # Create signature of the plain data
+        signature = rsa_utils.sign(self.private_key, cert_data)
         
         # Encrypt certificate contents with CA's private key
         # encoded_cert_data = str(cert_data).encode()
-        encrypted_cert = rsa_utils.encrypt(self.private_key, str(cert_data))
+        # encrypted_cert = rsa_utils.encrypt(self.private_key, str(cert_data))
         
         certificate = {
             'plain_data': cert_data,
-            'encrypted_data': encrypted_cert
+            'encrypted_data': signature
         }
         
         return certificate

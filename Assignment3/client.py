@@ -55,20 +55,20 @@ class Client:
         self.receiver_socket.close()
         self.context.term()
     
-    def verify_certificate(self, certificate):
-        """Verify a certificate's authenticity and validity."""
+    def verify_certificate(self, cert):
+        """Verify certificate authenticity and validity."""
         try:
-            # Decrypt with CA's public key
-            decrypted_data = rsa_utils.decrypt(self.public_key_authority, certificate['encrypted_data'])
-            cert_data = eval(decrypted_data)
-            
-            
-            if str(decrypted_data)==str(certificate['plain_data']):
-                valid=True
-            print("Verified......")
-            return valid, cert_data
-        except Exception as e:
-            print("error raised:",e)
+            # Verify the signature
+            if not rsa_utils.verify_signature(self.public_key_authority, cert['plain_data'], cert['encrypted_data']):
+                return False, None
+                
+            # Check expiration (existing logic)
+            current_time = int(rsa_utils.time.time())
+            if current_time > cert['plain_data']['timestamp'] + cert['plain_data']['duration']:
+                return False, None
+                
+            return True, cert['plain_data']
+        except:
             return False, None
         
     def get_client_certificate(self, target_client_id):
@@ -85,6 +85,7 @@ class Client:
             if verify_response_valid:
                 self.other_certificates[target_client_id] = certificate
                 self.client_ports[target_client_id] = certificate['plain_data']['port']
+                print("Certificate verified..")
                 return True
         return False
     
