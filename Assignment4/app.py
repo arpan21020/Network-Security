@@ -166,6 +166,22 @@ def register():
         'university_public_key': university.db['university']['public_key']
     })
 
+@app.route('/api/students')
+def get_all_students():
+    students = university.db['university']['students']
+    formatted = []
+    for roll, info in students.items():
+        formatted.append({
+            'name': info['name'],
+            'roll': roll,
+            'registered_on': info['registered_on'],
+            'grades_issued': os.path.exists(os.path.join(PDF_DIR, f"grades_{roll}.pdf")),
+            'degree_issued': os.path.exists(os.path.join(PDF_DIR, f"degree_{roll}.pdf"))
+        })
+    return jsonify({
+        'total': len(formatted),
+        'students': formatted
+    })
 
 
 @app.route('/api/request_grades', methods=['POST'])

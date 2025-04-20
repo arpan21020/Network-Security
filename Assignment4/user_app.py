@@ -82,8 +82,7 @@ class StudentServer:
 
     def login(self, roll, pwd):
         
-        s = self.db['students'].get(roll)
-        print(self.db['students'])
+        s = self.db['university']['students'].get(roll)
         if s and s['password']==pwd:
             self.current_student = roll
             return True
@@ -131,7 +130,7 @@ def login():
         student_server.university_public_key = requests.get(
             'http://localhost:5000/api/public_key'
         ).json()['public_key']
-        return render_template('student_dashboard.html', roll=roll)
+        return render_template('student_dashboard.html', roll=roll,name=student_server.db['university']['students'][roll]['name'])
     return "Invalid credentials", 401
 
 @app.route('/register', methods=['GET','POST'])
