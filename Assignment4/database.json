@@ -1,0 +1,36 @@
+{
+  "university": {
+    "public_key": [
+      39889,
+      797191
+    ],
+    "private_key": [
+      157409,
+      797191
+    ],
+    "students": {
+      "1001": {
+        "name": "  AK",
+        "password": "1234",
+        "public_key": [
+          201259,
+          579419
+        ],
+        "grades": {
+          "CS101": 65,
+          "MATH201": 72,
+          "PHYS301": 63,
+          "ENG401": 95
+        },
+        "registered_on": "2025-04-20 21:49:25"
+      }
+    },
+    "courses": {
+      "CS101": "Introduction to Computer Science",
+      "MATH201": "Advanced Mathematics",
+      "PHYS301": "Modern Physics",
+      "ENG401": "Technical Writing"
+    }
+  },
+  "students": {}
+}

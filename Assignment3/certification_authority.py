@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 class CertificationAuthority:
     def __init__(self, host="*", port=5555):
         # CA's own keypair
+        
         p = rsa_utils.generate_prime(1000, 5000)
         q = rsa_utils.generate_prime(1000, 5000)
         self.private_key, self.public_key = rsa_utils.generate_keypair(p, q)

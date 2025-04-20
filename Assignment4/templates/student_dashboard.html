@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, Student {{ roll }}</h1>
+    <form method="POST" action="/request_grades">
+        <input type="hidden" name="roll" value="{{ roll }}">
+        <button type="submit">Request Grades</button>
+    </form>
+</body>
+</html>

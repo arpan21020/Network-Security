@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Your Grades</title>
+</head>
+<body>
+    <h1>Your Grades</h1>
+    {% if signature_valid %}
+        <p style="color: green;">Document signature is valid</p>
+    {% else %}
+        <p style="color: red;">Document signature is invalid!</p>
+    {% endif %}
+    
+    <h2>Document Details</h2>
+    <p><strong>Name:</strong> {{ document.name }}</p>
+    <p><strong>Roll Number:</strong> {{ document.roll }}</p>
+    <p><strong>Date Issued:</strong> {{ document.date }}</p>
+    
+    <h3>Grades</h3>
+    <ul>
+        {% for course, grade in document.grades.items() %}
+            <li>{{ course }}: {{ grade }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
