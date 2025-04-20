@@ -1,19 +1,17 @@
 
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Grades</title></head>
+<head><meta charset="utf-8"><title>Degree Certificate</title></head>
 <body>
-  <h1>Your Grades</h1>
+  <h1>Degree Certificate</h1>
   <p><strong>Signature Status:</strong>
     {% if signature_valid %}Valid{% else %}Invalid{% endif %}
   </p>
   <ul>
     <li><strong>Name:</strong> {{ document.name }}</li>
     <li><strong>Roll:</strong> {{ document.roll }}</li>
-    {% for course, grade in document.grades.items() %}
-      <li>{{ course }}: {{ grade }}</li>
-    {% endfor %}
-    <li><strong>Date:</strong> {{ document.date }}</li>
+    <li><strong>Degree:</strong> {{ document.degree }}</li>
+    <li><strong>Date Issued:</strong> {{ document.date }}</li>
   </ul>
 
   {% if pdf_filename %}
