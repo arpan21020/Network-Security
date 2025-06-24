@@ -1,210 +1,182 @@
-
 import os
 import json
 import random
 from datetime import datetime
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import rsa_utils
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import LETTER
 
 app = Flask(__name__)
 
-# ensure the folder for PDFs exists
-PDF_DIR = os.path.join(app.static_folder, 'certificates')
+# Directory for storing generated PDFs
+PDF_DIR = os.path.join(app.static_folder or '.', 'certificates')
+# ensure the certificate folder exists
 os.makedirs(PDF_DIR, exist_ok=True)
 
-def create_signed_pdf(document: dict, signature, roll: str, doc_type: str) -> str:
-    """
-    Renders a PDF for `document` (grades or degree), embeds the `signature` as text,
-    saves it under static/certificates/, and returns the relative path.
-    """
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    filename = f"{doc_type}_{roll}_{timestamp}.pdf"
-    path = os.path.join(PDF_DIR, filename)
-
-    c = canvas.Canvas(path, pagesize=LETTER)
-    c.setFont("Helvetica-Bold", 18)
-    title = "Grade Report" if doc_type=="grades" else "Degree Certificate"
-    c.drawString(72, 750, title)
-
-    c.setFont("Helvetica", 12)
-    y = 720
-    for key, val in document.items():
-        c.drawString(72, y, f"{key.capitalize()}: {val}")
-        y -= 20
-
-    # leave some space, then embed signature
-    y -= 20
-    c.setFont("Helvetica-Oblique", 8)
-    c.drawString(72, y, f"Signature: {signature}")
-
-    c.showPage()
-    c.save()
-
-    # return path relative to static folder
-    return f"certificates/{filename}"
+# File for the university database
+UNIVERSITY_DB = 'university_db.json'
 
 class UniversityServer:
     def __init__(self):
+        self.db_file = UNIVERSITY_DB
         self.load_database()
-        if not self.db['university']['public_key']:
+        # generate keys if missing
+        uni = self.db['university']
+        if not uni.get('public_key') or not uni.get('private_key'):
             self.generate_university_keys()
 
     def load_database(self):
-        with open('database.json','r') as f:
-            self.db = json.load(f)
+        # bootstrap or load the JSON file; handle empty or malformed files
+        if not os.path.exists(self.db_file) or os.path.getsize(self.db_file) == 0:
+            self.db = {}
+        else:
+            try:
+                with open(self.db_file, 'r') as f:
+                    self.db = json.load(f)
+            except json.JSONDecodeError:
+                self.db = {}
+        # ensure structure
+        uni = self.db.setdefault('university', {})
+        uni.setdefault('public_key', None)
+        uni.setdefault('private_key', None)
+        uni.setdefault('students', {})
+        uni.setdefault('courses', {
+            'CS101': 'Introduction to Computer Science',
+            'MATH201': 'Advanced Mathematics',
+            'PHYS301': 'Modern Physics',
+            'ENG401': 'Technical Writing'
+        })
+        self.save_database()
 
     def save_database(self):
-        with open('database.json','w') as f:
+        with open(self.db_file, 'w') as f:
             json.dump(self.db, f, indent=2)
+
     def register_student(self, student_data):
-        name = student_data['name']
         roll = student_data['roll']
-        password = student_data['password']
-        public_key = student_data['public_key']
-        
         if roll in self.db['university']['students']:
-            return False, "Student already registered"
-        
-        # Generate random grades for courses
-        grades = {}
-        for course_code in self.db['university']['courses']:
-            grades[course_code] = random.randint(60, 95)
-        
+            return False, 'Student already registered'
+        # assign random grades
+        grades = { code: random.randint(60, 95) for code in self.db['university']['courses'] }
         self.db['university']['students'][roll] = {
-            'name': name,
-            'password': password,
-            'public_key': public_key,
+            'name': student_data['name'],
+            'password': student_data['password'],
+            'public_key': student_data['public_key'],
             'grades': grades,
-            'registered_on': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'registered_on': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
-        
         self.save_database()
-        return True, "Registration successful"
+        return True, 'Registration successful'
 
     def generate_university_keys(self):
-        p = rsa_utils.generate_prime(100,1000)
-        q = rsa_utils.generate_prime(100,1000)
-        public_key, private_key = rsa_utils.generate_keypair(p,q)
-        self.db['university']['public_key']  = public_key
-        self.db['university']['private_key'] = private_key
+        p = rsa_utils.generate_prime(100, 1000)
+        q = rsa_utils.generate_prime(100, 1000)
+        pub, priv = rsa_utils.generate_keypair(p, q)
+        uni = self.db['university']
+        uni['public_key'] = pub
+        uni['private_key'] = priv
         self.save_database()
 
-    def get_student_data(self, roll):
+    def get_student(self, roll):
         return self.db['university']['students'].get(roll)
 
-    def generate_signed_document(self, roll):
-        student = self.get_student_data(roll)
+    def create_signed_pdf(self, doc, signature, roll, doc_type):
+        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+        filename = f"{doc_type}_{roll}_{timestamp}.pdf"
+        path = os.path.join(PDF_DIR, filename)
+        c = canvas.Canvas(path, pagesize=LETTER)
+        c.setFont('Helvetica-Bold', 18)
+        title = 'Grade Report' if doc_type=='grades' else 'Degree Certificate'
+        c.drawString(72, 750, title)
+        c.setFont('Helvetica', 12)
+        y = 720
+        for k, v in doc.items():
+            c.drawString(72, y, f"{k.title()}: {v}")
+            y -= 20
+        y -= 20
+        c.setFont('Helvetica-Oblique', 8)
+        c.drawString(72, y, f"Signature: {signature}")
+        c.showPage()
+        c.save()
+        return f"certificates/{filename}"
+
+    def sign_document(self, roll, doc_type):
+        student = self.get_student(roll)
         if not student:
             return None
-
         doc = {
             'name': student['name'],
             'roll': roll,
-            'grades': student['grades'],
-            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            'date': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
+        if doc_type == 'grades':
+            doc['grades'] = student['grades']
+        else:
+            doc['degree'] = 'Bachelor of Technology'
         serialized = json.dumps(doc, sort_keys=True, separators=(',',':'))
         sig = rsa_utils.sign(self.db['university']['private_key'], serialized)
+        pdf = self.create_signed_pdf(doc, sig, roll, doc_type)
+        return {'document': doc, 'signature': sig, 'pdf_path': pdf}
 
-        pdf_path = create_signed_pdf(doc, sig, roll, doc_type="grades")
-        return {'document': doc, 'signature': sig, 'pdf_path': pdf_path}
-
-    def generate_signed_degree(self, roll):
-        student = self.get_student_data(roll)
-        if not student:
-            return None
-
-        doc = {
-            'name': student['name'],
-            'roll': roll,
-            'degree': 'Bachelor of Technology',
-            'date': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        serialized = json.dumps(doc, sort_keys=True, separators=(',',':'))
-        sig = rsa_utils.sign(self.db['university']['private_key'], serialized)
-
-        pdf_path = create_signed_pdf(doc, sig, roll, doc_type="degree")
-        return {'document': doc, 'signature': sig, 'pdf_path': pdf_path}
-
+# instantiate the server
 university = UniversityServer()
 
 @app.route('/')
 def home():
     return render_template('university_login.html')
 
+@app.route('/dashboard')
+def dashboard():
+    return render_template('university_dashboard.html')
+
 @app.route('/login', methods=['POST'])
 def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    
-    # In a real app, you'd have proper admin credentials
-    if username == 'admin' and password == 'admin123':
-        return render_template('university_dashboard.html')
-    return "Invalid credentials", 401
+    u = request.form.get('username')
+    p = request.form.get('password')
+    if u == 'admin' and p == 'admin123':
+        return redirect(url_for('dashboard'))
+    return 'Invalid credentials', 401
 
 @app.route('/api/public_key', methods=['GET'])
 def get_public_key():
-    return jsonify({
-        'public_key': university.db['university']['public_key']
-    })
+    return jsonify({'public_key': university.db['university']['public_key']})
 
 @app.route('/api/register', methods=['POST'])
-def register():
+def api_register():
     data = request.json
-    decrypted_data = rsa_utils.decrypt(
-        (university.db['university']['private_key'][0], university.db['university']['private_key'][1]),
-        data['encrypted_data']
-    )
-    student_data = json.loads(decrypted_data)
-    
-    success, message = university.register_student(student_data)
-    return jsonify({
-        'success': success,
-        'message': message,
-        'university_public_key': university.db['university']['public_key']
-    })
+    dec = rsa_utils.decrypt(tuple(university.db['university']['private_key']), data['encrypted_data'])
+    student_data = json.loads(dec)
+    ok, msg = university.register_student(student_data)
+    return jsonify({'success': ok, 'message': msg, 'public_key': university.db['university']['public_key']})
 
-@app.route('/api/students')
-def get_all_students():
+@app.route('/api/request_grades', methods=['POST'])
+def api_request_grades():
+    data = request.json
+    dec = rsa_utils.decrypt(tuple(university.db['university']['private_key']), data['encrypted_data'])
+    roll = json.loads(dec)['roll']
+    signed = university.sign_document(roll, 'grades')
+    return (jsonify(signed), 200) if signed else (jsonify({'error':'Not found'}), 404)
+
+@app.route('/api/request_degree', methods=['POST'])
+def api_request_degree():
+    data = request.json
+    dec = rsa_utils.decrypt(tuple(university.db['university']['private_key']), data['encrypted_data'])
+    roll = json.loads(dec)['roll']
+    signed = university.sign_document(roll, 'degree')
+    return (jsonify(signed), 200) if signed else (jsonify({'error':'Not found'}), 404)
+
+@app.route('/api/students', methods=['GET'])
+def api_students():
     students = university.db['university']['students']
     formatted = []
     for roll, info in students.items():
         formatted.append({
-            'name': info['name'],
             'roll': roll,
-            'registered_on': info['registered_on'],
-            'grades_issued': os.path.exists(os.path.join(PDF_DIR, f"grades_{roll}.pdf")),
-            'degree_issued': os.path.exists(os.path.join(PDF_DIR, f"degree_{roll}.pdf"))
+            'name': info['name'],
+            'registered_on': info['registered_on']
         })
-    return jsonify({
-        'total': len(formatted),
-        'students': formatted
-    })
-
-
-@app.route('/api/request_grades', methods=['POST'])
-def request_grades():
-    enc = request.json['encrypted_data']
-    priv = university.db['university']['private_key']
-    decrypted = rsa_utils.decrypt((priv[0],priv[1]), enc)
-    roll = json.loads(decrypted)['roll']
-
-    signed = university.generate_signed_document(roll)
-    return jsonify(signed) if signed else (jsonify({'error':'Not found'}),404)
-
-@app.route('/api/request_degree', methods=['POST'])
-def request_degree():
-    enc = request.json['encrypted_data']
-    priv = university.db['university']['private_key']
-    decrypted = rsa_utils.decrypt((priv[0],priv[1]), enc)
-    roll = json.loads(decrypted)['roll']
-
-    signed = university.generate_signed_degree(roll)
-    return jsonify(signed) if signed else (jsonify({'error':'Not found'}),404)
-
-# ... other endpoints unchanged ...
+    return jsonify({'total': len(formatted), 'students': formatted})
 
 if __name__=='__main__':
     app.run(port=5000, debug=True)
